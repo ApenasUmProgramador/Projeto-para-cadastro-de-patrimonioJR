@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Sistema de Inventário</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Variáveis CSS para cores */
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --header-bg: #1c7ed6;
+            --box-border: #444;
+            --bg-color: #f5f5f5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--dark-color);
+            overflow-x: hidden;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        body.loaded { opacity: 1; }
+        
+        .header {
+            background-color: var(--header-bg);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            position: relative;
+        }
+        
+        .menu-icon {
+            font-size: 1.8em;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .header-title {
+            text-align: center;
+            flex-grow: 1;
+            font-size: 1.5em;
+        }
+
+        .header-title-text {
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        
+        .content-wrapper { display: flex; }
+        
+        .sidebar {
+            width: 0;
+            min-height: 100vh;
+            background-color: var(--primary-color);
+            color: white;
+            transition: width 0.3s ease;
+            overflow-x: hidden;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 999;
+            padding-top: 60px;
+        }
+        
+        .sidebar.open {
+            width: 250px;
+            padding: 20px;
+        }
+
+        .sidebar ul { list-style: none; }
+        
+        .sidebar ul li {
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+            font-size: 1.1em;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Espaço entre o ícone e o texto */
+        }
+        
+        .main-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+            transition: margin-left 0.3s ease;
+        }
+        
+        body.sidebar-open .main-content { margin-left: 250px; }
+        
+        .box {
+            border: 2px solid var(--box-border);
+            padding: 20px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .box-title {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .devices-box {
+            grid-column: 1 / 2;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .devices-list p {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .scheduled-box {
+            grid-column: 1 / 2;
+            height: 200px;
+        }
+        
+        .search-container {
+            grid-column: 2 / 3;
+            grid-row: 1 / span 2;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .search-bar input {
+            flex-grow: 1;
+        }
+        
+        .search-results {
+            border: 2px solid var(--box-border);
+            border-radius: 8px;
+            flex-grow: 1;
+            padding: 10px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--bg-color);
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                margin-left: 0 !important;
+            }
+            .search-container {
+                grid-column: 1 / -1;
+                grid-row: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div id="menu-icon" class="menu-icon">&#9776;</div>
+            <div class="header-title">
+                Seja Bem-vindo, <span id="display-username" class="header-title-text">[Nome do Colaborador]</span>
+            </div>
+        </div>
+
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html"><span role="img" aria-label="Casa">🏠</span> Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html"><span role="img" aria-label="Computador">💻</span> Gerenciar Dispositivos</a></li>
+                    <li><a href="#"><span role="img" aria-label="Calendário">📅</span> Agendar Limpeza</a></li>
+                    <li><a href="#"><span role="img" aria-label="Gráfico">📈</span> Relatórios</a></li>
+                    <li><a href="#"><span role="img" aria-label="Engrenagem">⚙️</span> Configurações</a></li>
+                    <li><a href="#" id="logout-btn"><span role="img" aria-label="Sair">🚪</span> Sair</a></li>
+                </ul>
+            </div>
+
+            <div class="main-content">
+                <div class="box devices-box">
+                    <h2 class="box-title">Dispositivos Ativos <span style="color: green;">*</span></h2>
+                    <div class="devices-list">
+                        <p>Computadores [tabela pcs]</p>
+                        <p>Monitores [tabela monitores]</p>
+                    </div>
+                </div>
+                
+                <div class="box scheduled-box">
+                    <h2 class="box-title">limpezas agendadas:</h2>
+                    <p>Nenhuma limpeza agendada no momento.</p>
+                </div>
+
+                <div class="box search-container">
+                    <div class="search-bar">
+                        <input type="text" id="search-input" placeholder="Buscar...">
+                        <button id="create-btn" class="btn-primary" style="width: auto;">+ Criar</button>
+                    </div>
+                    <div id="results-box" class="search-results">
+                        <p>resultados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const displayUsername = document.getElementById('display-username');
+            const menuIcon = document.getElementById('menu-icon');
+            const sidebar = document.getElementById('sidebar');
+            const logoutBtn = document.getElementById('logout-btn');
+            const body = document.body;
+
+            const username = localStorage.getItem('username');
+            if (!username) {
+                window.location.href = 'index.html';
+                return;
+            }
+            displayUsername.textContent = username;
+
+            menuIcon.addEventListener('click', () => {
+                sidebar.classList.toggle('open');
+                body.classList.toggle('sidebar-open');
+            });
+            
+            document.getElementById('search-input').addEventListener('input', (e) => {
+                const resultsBox = document.getElementById('results-box');
+                const searchTerm = e.target.value.toLowerCase();
+                if (searchTerm.length === 0) {
+                    resultsBox.innerHTML = '<p>resultados</p>';
+                } else {
+                    resultsBox.innerHTML = `<p>Buscando por: <b>${searchTerm}</b>...</p>`;
+                }
+            });
+
+            logoutBtn.addEventListener('click', () => {
+                localStorage.removeItem('username');
+                window.location.href = 'index.html';
+            });
+        });
+    </script>
+</body>
+</html>

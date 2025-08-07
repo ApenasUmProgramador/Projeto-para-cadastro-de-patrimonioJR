@@ -1,0 +1,95 @@
+/*
+ * =========================================
+ * CSS APRIMORADO PARA O BOTÃO MODO ESCURO
+ * =========================================
+ */
+
+/* Contêiner do botão */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+}
+
+/* Esconde o checkbox padrão do HTML */
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+/* O "trilho" do botão deslizante */
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc; /* Cor do trilho no modo claro */
+    transition: .4s;
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Para posicionar os ícones */
+    padding: 0 5px; /* Espaçamento para os ícones */
+}
+
+/* O círculo que desliza */
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    z-index: 2; /* Fica na frente dos ícones */
+}
+
+/* Ícones de Sol e Lua */
+.slider .icon-sun, .slider .icon-moon {
+    color: white;
+    font-size: 16px;
+    transition: opacity 0.4s;
+}
+
+.slider .icon-sun {
+    opacity: 1; /* Sol visível por padrão */
+}
+.slider .icon-moon {
+    opacity: 0; /* Lua invisível por padrão */
+}
+
+
+/* --- ESTADO ATIVO (CHECKED) --- */
+
+input:checked + .slider {
+    background-color: var(--secondary-color); /* Usa a cor secundária do tema claro */
+}
+
+input:checked + .slider:before {
+    transform: translateX(26px); /* Move o círculo para a direita */
+}
+
+input:checked + .slider .icon-sun {
+    opacity: 0; /* Esconde o sol */
+}
+input:checked + .slider .icon-moon {
+    opacity: 1; /* Mostra a lua */
+}
+
+
+/* --- CORES PARA O MODO ESCURO --- */
+
+/* Adapta as cores do botão quando a classe .dark-mode está no body */
+.dark-mode .slider {
+    background-color: #555; /* Cor do trilho no modo escuro */
+}
+
+.dark-mode input:checked + .slider {
+    background-color: var(--secondary-color); /* Usa a cor secundária do tema escuro */
+}

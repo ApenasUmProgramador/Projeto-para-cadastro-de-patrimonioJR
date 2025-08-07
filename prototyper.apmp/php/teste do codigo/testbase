@@ -1,0 +1,148 @@
+<?php
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *'); // Mantenha para desenvolvimento. RESTRINJA EM PRODUÇÃO!
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS'); // Adicionado GET para o teste de conexão
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+
+// Se for uma requisição OPTIONS (pré-voo CORS), apenas retorne 200 OK
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+session_start(); // Mantenha se for usar sessões
+
+// --- Configurações do Banco de Dados ---
+define('DB_HOST', '127.0.0.1');
+define('DB_USER', 'root'); // Seu usuário do banco de dados
+define('DB_PASS', '');     // Sua senha do banco de dados
+define('DB_NAME', 'jr');   // Nome do seu banco de dados: 'jr'
+
+// --- Função para conectar ao Banco de Dados usando PDO ---
+function getDbConnection() {
+    $dsn = 'mysql:host=' . DB_HOST . ';dbname=' . DB_NAME . ';charset=utf8mb4';
+    try {
+        $pdo = new PDO($dsn, DB_USER, DB_PASS);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION); // Lança exceções em caso de erro
+        $pdo->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_ASSOC); // Retorna resultados como array associativo
+        return $pdo;
+    } catch (PDOException $e) {
+        // Em um ambiente de produção, registre o erro em um log, não exiba diretamente
+        error_log('Erro de conexão com o banco de dados: ' . $e->getMessage());
+        return null; // Retorna null em caso de falha na conexão
+    }
+}
+
+// --- Lógica de Autenticação (handleLogin) ---
+function handleLogin($pdo) {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+
+    if (empty($username) || empty($password)) {
+        http_response_code(400); // Bad Request
+        echo json_encode(['success' => false, 'message' => 'Usuário e senha são obrigatórios.']);
+        return;
+    }
+
+    // Consulta a tabela 'usuarios' e as colunas 'Usuario' e 'senha'
+    $stmt = $pdo->prepare("SELECT id, Usuario, senha FROM usuarios WHERE Usuario = :username");
+    $stmt->execute([':username' => $username]);
+    $user = $stmt->fetch();
+
+    if ($user && password_verify($password, $user['senha'])) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['Usuario'];
+
+        http_response_code(200); // OK
+        echo json_encode([
+            'success' => true,
+            'message' => 'Login bem-sucedido!'
+        ]);
+    } else {
+        http_response_code(401); // Unauthorized
+        echo json_encode(['success' => false, 'message' => 'Usuário ou senha inválidos.']);
+    }
+}
+
+// --- Nova Função: Teste de Conexão com Banco de Dados ---
+function testDbConnection() {
+    $pdo = getDbConnection();
+    if ($pdo) {
+        // Tenta fazer uma query simples para garantir que a conexão está ativa
+        try {
+            $pdo->query("SELECT 1"); // Query simples que sempre retorna 1 se o DB estiver ok
+            http_response_code(200);
+            echo json_encode(['success' => true, 'message' => 'Conexão com o banco de dados JR estabelecida com sucesso!']);
+        } catch (PDOException $e) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Conexão com o banco de dados JR falhou após a conexão inicial. Erro: ' . $e->getMessage()]);
+        }
+    } else {
+        http_response_code(500);
+        echo json_encode(['success' => false, 'message' => 'Falha ao estabelecer conexão com o banco de dados JR. Verifique as configurações (host, usuário, senha, nome do DB).']);
+    }
+}
+
+
+// --- Roteamento das Requisições ---
+// Obtém a ação do parâmetro 'action' da URL
+$action = $_GET['action'] ?? '';
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Apenas para POST, obtém o corpo da requisição
+if ($method === 'POST') {
+    // Para o nosso caso, o action do JS é 'login_attempt'
+    // Mas acess_login.php pode ser chamado diretamente sem 'action' na URL
+    // Então, se o corpo for JSON, decodifique. Se for FormData, $_POST já o trata.
+    // Para este script de login, $_POST é o mais provável.
+    // $input = json_decode(file_get_contents('php://input'), true);
+    // $action = $input['action'] ?? $action; // Preferir action do corpo se existir
+}
+
+
+// Obtém a conexão com o banco de dados apenas quando necessário
+$pdo = null;
+if ($action !== 'test_db_connection') { // Não conecta para o teste de DB se não for preciso autenticar
+    $pdo = getDbConnection();
+    if (!$pdo) {
+        // Se a conexão falhar, o getDbConnection já retorna o erro e sai.
+        // Mas se quisermos que o teste de DB mostre o erro, precisamos que getDbConnection não saia.
+        // Ajustamos getDbConnection para retornar null.
+        // Então, se $pdo for null aqui, significa que a conexão falhou para qualquer outra ação.
+        // O teste de DBConnection tem sua própria lógica de erro.
+        // Se getDbConnection já saiu, a execução não chegará aqui.
+    }
+}
+
+
+switch ($action) {
+    case 'login': // Ação usada internamente pela função callApi no JS
+    case 'login_attempt': // Ação específica para o login do seu JS
+        if ($method === 'POST') {
+            if ($pdo) { // Garante que a conexão com o banco de dados foi bem-sucedida para o login
+                handleLogin($pdo);
+            } else {
+                http_response_code(500);
+                echo json_encode(['success' => false, 'message' => 'Erro interno: Não foi possível conectar ao banco de dados para realizar o login.']);
+            }
+        } else {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido para esta ação.']);
+        }
+        break;
+
+    case 'test_db_connection': // Nova ação para testar a conexão
+        if ($method === 'GET') { // Geralmente GET para testes de status
+            testDbConnection();
+        } else {
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Método não permitido para esta ação.']);
+        }
+        break;
+        
+    default:
+        http_response_code(404); // Not Found
+        echo json_encode(['success' => false, 'message' => 'Ação não encontrada ou método inválido.']);
+        break;
+}
+?>
