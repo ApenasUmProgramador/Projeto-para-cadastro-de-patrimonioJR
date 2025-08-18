@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Visualizar Registros</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* === CSS GLOBAL E DA PÁGINA === */
+        :root {
+            --primary-color: #2c3e50; --secondary-color: #3498db; --accent-color: #e74c3c;
+            --light-color: #ecf0f1; --dark-color: #2c3e50; --header-bg: linear-gradient(90deg, #1c7ed6, #3498db);
+            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); --bg-color: #f5f5f5; --border-color: #ddd;
+        }
+        .dark-mode {
+            --primary-color: #f0f0f0; --secondary-color: #61dafb; --accent-color: #ef5350;
+            --light-color: #3b3b3b; --dark-color: #f0f0f0; --header-bg: linear-gradient(90deg, #1f2024, #2b2c30);
+            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); --bg-color: #1a1a1a; --border-color: #4a4a4a;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+        body { background-color: var(--bg-color); color: var(--dark-color); overflow-x: hidden; opacity: 0; transition: opacity 0.5s, background-color 0.3s, color 0.3s; }
+        body.loaded { opacity: 1; }
+        .header { background: var(--header-bg); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; position: relative; height: 60px; }
+        .menu-icon { font-size: 1.8em; cursor: pointer; line-height: 1; position: absolute; right: 20px; transition: transform 0.3s ease; }
+        .header-title { text-align: center; flex-grow: 1; font-size: 1.5em; }
+        .sidebar { width: 0; height: 100vh; background-color: var(--primary-color); color: white; transition: width 0.3s ease, background-color 0.3s; overflow-x: hidden; position: fixed; top: 0; right: 0; z-index: 999; }
+        .sidebar.open { width: 250px; padding: 70px 20px 20px 20px; }
+        .sidebar ul { list-style: none; padding: 0; margin: 0; }
+        .sidebar ul li { padding: 15px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1); transition: background-color 0.2s; }
+        .sidebar ul li:hover { background-color: rgba(255, 255, 255, 0.1); }
+        .sidebar ul li a { color: white; text-decoration: none; font-size: 1.1em; display: flex; align-items: center; gap: 15px; }
+        .content-wrapper { display: flex; }
+        body.sidebar-open .main-content { margin-right: 250px; transition: margin-right 0.3s ease; }
+        .main-content { padding: 20px; flex-grow: 1; }
+        .box { border-radius: 8px; background-color: var(--light-color); box-shadow: var(--box-shadow); padding: 20px; border: 1px solid transparent; }
+        .dark-mode .box { border: 1px solid var(--border-color); }
+        .table-controls { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        #filter-input { flex-grow: 1; padding: 12px 15px; border-radius: 6px; border: 1px solid var(--border-color); font-size: 1em; background-color: var(--bg-color); color: var(--dark-color); }
+        .create-btn { padding: 12px 15px; font-size: 1em; font-weight: 700; color: white; background-color: #27ae60; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.2s; white-space: nowrap; }
+        .create-btn:hover { background-color: #229954; }
+        .table-container { width: 100%; overflow-x: auto; }
+        #data-table { width: 100%; border-collapse: collapse; }
+        #data-table th, #data-table td { padding: 12px 15px; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+        #data-table th { background-color: var(--bg-color); font-weight: 700; text-transform: uppercase; font-size: 0.85em; letter-spacing: 0.5px; }
+        #data-table tbody tr:hover { background-color: rgba(0, 0, 0, 0.05); }
+        .edit-btn { background-color: var(--secondary-color); color: white; border: none; cursor: pointer; font-size: 1em; padding: 6px 10px; border-radius: 5px; transition: background-color 0.2s; }
+        .edit-btn:hover { background-color: var(--primary-color); color: white; }
+        .dark-mode .edit-btn:hover { background-color: var(--accent-color); }
+        .spinner-container { display: flex; justify-content: center; align-items: center; padding: 50px; }
+        .spinner { border: 5px solid var(--light-color); border-top: 5px solid var(--secondary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-title"><span id="view-title">Visualizando Registros</span></div>
+            <div id="menu-icon" class="menu-icon">&#8942;</div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="box">
+                    <div class="table-controls">
+                        <input type="text" id="filter-input" placeholder="🔎 Filtrar por qualquer campo...">
+                        <button id="create-new-btn" class="create-btn">➕ Criar Novo</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="data-table">
+                            <thead></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- LÓGICA GLOBAL (MENU, TEMA, LOGOUT) ---
+            const body = document.body;
+            const menuIcon = document.getElementById('menu-icon');
+            const sidebar = document.getElementById('sidebar');
+            const logoutBtn = document.getElementById('logout-btn');
+
+            if (menuIcon && sidebar) {
+                menuIcon.addEventListener('click', () => {
+                    sidebar.classList.toggle('open');
+                    body.classList.toggle('sidebar-open');
+                });
+            }
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', () => {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                });
+            }
+            const applyTheme = () => {
+                if (localStorage.getItem('darkMode') === 'enabled') {
+                    body.classList.add('dark-mode');
+                } else {
+                    body.classList.remove('dark-mode');
+                }
+            };
+            applyTheme();
+
+            // --- LÓGICA ESPECÍFICA DA PÁGINA 'visualizar.html' ---
+            const tableHead = document.querySelector('#data-table thead');
+            const tableBody = document.getElementById('table-body');
+            const filterInput = document.getElementById('filter-input');
+            const pageTitle = document.getElementById('view-title');
+            const createNewBtn = document.getElementById('create-new-btn');
+
+            if (tableHead) {
+                let allRecords = [];
+                const urlParams = new URLSearchParams(window.location.search);
+                const tipo = urlParams.get('tipo');
+
+                if (!tipo) {
+                    pageTitle.textContent = "Erro: Tipo de registro não especificado.";
+                    body.classList.add('loaded'); // Mostra a página para exibir o erro
+                    return;
+                }
+
+                const tableConfig = {
+                    'pcs': { headers: ['Nome da Máquina', 'Usuário', 'Setor', 'IP', 'Patrimônio', 'Ações'], render: (record) => `<td>${record.nome_maquina || ''}</td><td>${record.setor || ''}</td><td>${record.usuario || ''}</td><td>${record.endereco_ip || ''}</td><td>${record.n_patrimonio || ''}</td><td><button class="edit-btn" data-id="${record.n_pcs}">Editar ✎</button></td>` },
+                    'monitor': { headers: ['ID', 'Modelo', 'Setor', 'Patrimônio', 'Ações'], render: (record) => `<td>${record.id_monitor || ''}</td><td>${record.modelo || ''}</td><td>${record.setor || ''}</td><td>${record.patrimonio || ''}</td><td><button class="edit-btn" data-id="${record.id_monitor}">Editar ✎</button></td>` },
+                    'nobreack': { headers: ['ID', 'Modelo', 'Setor', 'Patrimônio', 'Ações'], render: (record) => `<td>${record.id_nobreack || ''}</td><td>${record.modelo || ''}</td><td>${record.setor || ''}</td><td>${record.patrimonio || ''}</td><td><button class="edit-btn" data-id="${record.id_nobreack}">Editar ✎</button></td>` }
+                };
+
+                const config = tableConfig[tipo];
+                if (!config) {
+                    pageTitle.textContent = `Erro: Configuração para '${tipo}' não encontrada.`;
+                    body.classList.add('loaded');
+                    return;
+                }
+
+                pageTitle.textContent = `Visualizando ${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+                tableHead.innerHTML = `<tr>${config.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+
+                const showSpinner = () => { tableBody.innerHTML = `<tr><td colspan="${config.headers.length}"><div class="spinner-container"><div class="spinner"></div></div></td></tr>`; };
+
+                const fetchData = async () => {
+                    showSpinner();
+                    try {
+                        const response = await fetch(`php/api_mon.php?registros=${tipo}`);
+                        if (!response.ok) throw new Error('Erro na API');
+                        allRecords = await response.json();
+                        renderTable(allRecords);
+                    } catch (error) {
+                        console.error("Erro ao buscar dados:", error);
+                        tableBody.innerHTML = `<tr><td colspan="${config.headers.length}">Erro ao carregar dados. Verifique a API ou o console (F12).</td></tr>`;
+                    }
+                };
+
+                const renderTable = (records) => {
+                    tableBody.innerHTML = '';
+                    if (records.length === 0) { tableBody.innerHTML = `<tr><td colspan="${config.headers.length}">Nenhum registro encontrado.</td></tr>`; return; }
+                    records.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = config.render(record);
+                        tableBody.appendChild(row);
+                    });
+                };
+
+                tableBody.addEventListener('click', (e) => {
+                    if (e.target && e.target.classList.contains('edit-btn')) {
+                        const recordId = e.target.dataset.id;
+                        if (recordId) {
+                            window.location.href = `edita_produto.html?tipo=${tipo}&id=${recordId}`;
+                        }
+                    }
+                });
+
+                filterInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filteredRecords = allRecords.filter(record => Object.values(record).some(value => String(value).toLowerCase().includes(searchTerm)));
+                    renderTable(filteredRecords);
+                });
+
+                if (createNewBtn) {
+                    createNewBtn.addEventListener('click', () => {
+                        window.location.href = `criar.html?tipo=${tipo}`;
+                    });
+                }
+
+                fetchData();
+            }
+            
+            // --- FINALIZAÇÃO: TORNA A PÁGINA VISÍVEL ---
+            setTimeout(() => {
+                body.classList.add('loaded');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
