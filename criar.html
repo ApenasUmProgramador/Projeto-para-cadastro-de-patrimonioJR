@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Criar Novo Registro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title">Seja Bem-vindo, <span id="display-username">...</span></div>
+            <div class="header-right-placeholder"></div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="box form-container">
+                    <h1 id="create-title" style="text-align: center; margin-bottom: 20px;">Criar Novo Registro</h1>
+                    <form id="create-form">
+                        <div id="form-fields">
+                            <div class="spinner-container"><div class="spinner"></div></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Salvar Novo Registro</button>
+                            <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                        </div>
+                    </form>
+                    <div id="feedback-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+            const sessionResponse = await fetch('/php/check_session.php', { credentials: 'include' });
+            if (!sessionResponse.ok) {
+                alert('Acesso não autorizado. Por favor, faça o login.');
+                window.location.href = 'index.html';
+                return;
+            }
+            const userData = await sessionResponse.json();
+
+            // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA A PÁGINA ---
+            const displayUsername = document.getElementById('display-username');
+            if(displayUsername) { displayUsername.textContent = userData.username; }
+
+            const menuIcon = document.getElementById('menu-icon');
+            const sidebar = document.getElementById('sidebar');
+            if (menuIcon && sidebar) {
+                menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await fetch('/php/logout.php', { method: 'POST', credentials: 'include' });
+                    window.location.href = 'index.html';
+                });
+            }
+
+            document.body.classList.add('loaded');
+
+            // --- 3. EXECUTA A LÓGICA ESPECÍFICA DA PÁGINA DE CRIAÇÃO ---
+            const formFields = document.getElementById('form-fields');
+            const createForm = document.getElementById('create-form');
+            const pageTitle = document.getElementById('create-title');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const feedbackMessage = document.getElementById('feedback-message');
+            
+            const urlParams = new URLSearchParams(window.location.search);
+            const tipo = urlParams.get('tipo');
+
+            if (!tipo) {
+                pageTitle.textContent = "Erro: Tipo de registro não especificado.";
+                formFields.innerHTML = '<p class="error">Não foi possível determinar o tipo de item a ser criado.</p>';
+                return;
+            }
+            
+            pageTitle.textContent = `Criar Novo(a) ${tipo.replace('pcs', 'PC').replace('monitor', 'Monitor').replace('nobreak', 'Nobreak')}`;
+
+            const buildFormFromSchema = async () => {
+                try {
+                    // CORREÇÃO: Usando caminho absoluto
+                    const response = await fetch(`/php/api_mon.php?getschema=${tipo}`, { credentials: 'include' });
+                    if(!response.ok) throw new Error("Não foi possível carregar a estrutura do formulário.");
+                    const schema = await response.json();
+                    
+                    let formHTML = '';
+                    schema.forEach(column => {
+                        if (column.Extra === 'auto_increment') { return; }
+                        const label = column.Field.replace(/_/g, ' ');
+                        formHTML += `
+                            <div class="form-group">
+                                <label for="${column.Field}">${label}</label>
+                                <input type="text" id="${column.Field}" name="${column.Field}" required>
+                            </div>
+                        `;
+                    });
+                    formFields.innerHTML = formHTML;
+
+                } catch (error) {
+                    formFields.innerHTML = `<p style="color:red;">${error.message}</p>`;
+                    console.error('Erro ao buscar esquema:', error);
+                }
+            };
+            
+            createForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(createForm);
+                const dataToCreate = Object.fromEntries(formData.entries());
+
+                try {
+                    // CORREÇÃO: Usando caminho absoluto
+                    const response = await fetch('/php/api_mon.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ tipo: tipo, data: dataToCreate })
+                    });
+                    
+                    const result = await response.json();
+
+                    if(response.ok) {
+                        feedbackMessage.textContent = result.message;
+                        feedbackMessage.className = 'success';
+                        feedbackMessage.style.display = 'block';
+                        setTimeout(() => window.location.href = `visualizar.html?tipo=${tipo}`, 1500);
+                    } else {
+                        throw new Error(result.error || "Erro desconhecido ao salvar.");
+                    }
+                } catch (error) {
+                    feedbackMessage.textContent = 'Erro: ' + error.message;
+                    feedbackMessage.className = 'error';
+                    feedbackMessage.style.display = 'block';
+                }
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                window.location.href = `visualizar.html?tipo=${tipo}`;
+            });
+
+            buildFormFromSchema();
+
+        } catch (error) {
+            console.error("Erro crítico na página:", error);
+            window.location.href = 'index.html';
+        }
+    });
+    </script>
+</body>
+</html>

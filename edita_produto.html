@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Editar Registro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title"><span id="edit-title">Editar Registro</span></div>
+            <div class="header-right-placeholder"></div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="box">
+                    <form id="edit-form">
+                        <div id="form-fields">
+                            <div class="spinner-container"><div class="spinner"></div></div>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+                            <button type="button" id="cancel-btn" class="btn btn-secondary">Cancelar</button>
+                        </div>
+                    </form>
+                    <div id="feedback-message"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+        try {
+            const sessionResponse = await fetch('php/check_session.php', { credentials: 'include' });
+            if (!sessionResponse.ok) {
+                alert('Acesso não autorizado. Por favor, faça o login.');
+                window.location.href = 'index.html';
+                return;
+            }
+            const userData = await sessionResponse.json();
+
+            // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA A PÁGINA ---
+            const displayUsername = document.getElementById('display-username');
+            if(displayUsername) { displayUsername.textContent = userData.username; }
+
+            const menuIcon = document.getElementById('menu-icon');
+            const sidebar = document.getElementById('sidebar');
+            if (menuIcon && sidebar) {
+                menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await fetch('php/logout.php', { method: 'POST', credentials: 'include' });
+                    window.location.href = 'index.html';
+                });
+            }
+
+            document.body.classList.add('loaded');
+
+            // --- 3. EXECUTA A LÓGICA ESPECÍFICA DA PÁGINA DE EDIÇÃO ---
+            const formFields = document.getElementById('form-fields');
+            const editForm = document.getElementById('edit-form');
+            const pageTitle = document.getElementById('edit-title');
+            const cancelBtn = document.getElementById('cancel-btn');
+            const feedbackMessage = document.getElementById('feedback-message');
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const tipo = urlParams.get('tipo');
+            const id = urlParams.get('id');
+            let primaryKeyName = '';
+
+            if (!tipo || !id) {
+                pageTitle.textContent = "Erro: Parâmetros inválidos.";
+                formFields.innerHTML = '<p class="error">Faltando tipo ou ID do registro para editar.</p>';
+                return;
+            }
+
+            const fieldLabels = {
+                'n_pcs': 'Nº PC (ID)', 'nome_maquina': 'Nome da Máquina', 'setor': 'Setor', 'usuario': 'Usuário',
+                'ramal': 'Ramal', 'cidade': 'Cidade', 'tag_dell': 'TAG Dell', 'mac': 'Endereço MAC',
+                'endereco_ip': 'Endereço IP', 'obs': 'Observações', 'so': 'Sistema Operacional',
+                'n_patrimonio': 'Nº Patrimônio', 'id_monitor': 'ID Monitor', 'modelo': 'Modelo',
+                'patrimonio': 'Patrimônio', 'id_nobreak': 'ID Nobreak'
+            };
+
+            const populateForm = (data) => {
+                let formHTML = '';
+                primaryKeyName = Object.keys(data)[0]; 
+
+                for (const key in data) {
+                    const label = fieldLabels[key] || key;
+                    const value = data[key] || '';
+                    const isPrimaryKey = key === primaryKeyName;
+                    
+                    formHTML += `
+                        <div class="form-group">
+                            <label for="${key}">${label}</label>
+                            <input type="text" id="${key}" name="${key}" value="${value}" ${isPrimaryKey ? 'readonly style="background-color:#eee;"' : ''}>
+                        </div>
+                    `;
+                }
+                formFields.innerHTML = formHTML;
+            };
+
+            // =========================================================================
+            // INÍCIO DO CÓDIGO COMPLETADO
+            // =========================================================================
+
+            const fetchItemData = async () => {
+                try {
+                    const response = await fetch(`php/api_mon.php?getitem=${tipo}&id=${id}`, { credentials: 'include' });
+                    if(!response.ok) throw new Error('Falha ao buscar dados do registro.');
+                    
+                    const data = await response.json();
+                    if(data && !data.error) {
+                        populateForm(data);
+                        const displayName = data.nome_maquina || data.modelo || data.patrimonio || id;
+                        pageTitle.textContent = `Editando ${tipo}: ${displayName}`;
+                    } else {
+                        pageTitle.textContent = "Erro: Registro não encontrado.";
+                        formFields.innerHTML = `<p class="error">${data.error || 'Registro não encontrado.'}</p>`;
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar dados do item:", error);
+                    formFields.innerHTML = `<p class="error">Não foi possível carregar os dados para edição.</p>`;
+                }
+            };
+            
+            editForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const formData = new FormData(editForm);
+                const dataToUpdate = {};
+                for (let [key, value] of formData.entries()) {
+                    if (key !== primaryKeyName) { dataToUpdate[key] = value; }
+                }
+
+                try {
+                    const response = await fetch('php/api_mon.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
+                        body: JSON.stringify({ tipo: tipo, id: id, data: dataToUpdate })
+                    });
+                    
+                    const result = await response.json();
+
+                    if(response.ok) {
+                        feedbackMessage.textContent = result.message || "Salvo com sucesso!";
+                        feedbackMessage.className = 'success';
+                        feedbackMessage.style.display = 'block';
+                        setTimeout(() => window.location.href = `visualizar.html?tipo=${tipo}`, 1500);
+                    } else {
+                        throw new Error(result.error || "Erro desconhecido ao salvar.");
+                    }
+                } catch (error) {
+                    feedbackMessage.textContent = 'Erro: ' + error.message;
+                    feedbackMessage.className = 'error';
+                    feedbackMessage.style.display = 'block';
+                }
+            });
+
+            cancelBtn.addEventListener('click', () => {
+                window.location.href = `visualizar.html?tipo=${tipo}`;
+            });
+
+            // Busca os dados do item para preencher o formulário
+            fetchItemData();
+            
+            // =========================================================================
+            // FIM DO CÓDIGO COMPLETADO
+            // =========================================================================
+
+        } catch (error) {
+            console.error("Erro crítico na página:", error);
+            window.location.href = 'index.html';
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Dashboard</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
+
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title">Seja Bem-vindo, <span id="display-username">...</span></div>
+            <div class="header-right-placeholder"></div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="dashboard-grid">
+                    <div id="pcs-box" class="box stats-box" onclick="window.location.href='visualizar.html?tipo=pcs'">
+                        <span>Computadores Registrados</span><h3 id="pcs-count">...</h3>
+                    </div>
+                    <div id="monitors-box" class="box stats-box" onclick="window.location.href='visualizar.html?tipo=monitor'">
+                        <span>Monitores Registrados</span><h3 id="monitors-count">...</h3>
+                    </div>
+                    <div id="nobreaks-box" class="box stats-box" onclick="window.location.href='visualizar.html?tipo=nobreak'">
+                        <span>Nobreaks Registrados</span><h3 id="nobreaks-count">...</h3>
+                    </div>
+                    <div id="services-box" class="box services-box">
+                        <h2>Serviços e Tickets</h2><ul id="services-list" class="services-list"></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script defer src="estilo/mdpadrao.js"></script>
+    <script>
+        document.addEventListener('app-ready', () => {
+            const fetchDashboardData = async () => {
+                try {
+                    const response = await fetch('/php/api_mon.php', { credentials: 'include' });
+                    if (!response.ok) { return; }
+                    const data = await response.json();
+                    document.getElementById('pcs-count').textContent = data.pcs || 0;
+                    document.getElementById('monitors-count').textContent = data.monitors || 0;
+                    document.getElementById('nobreaks-count').textContent = data.nobreaks || 0;
+                } catch (error) {
+                    console.error('Falha ao buscar dados do dashboard:', error);
+                    document.getElementById('pcs-count').textContent = '-';
+                    document.getElementById('monitors-count').textContent = '-';
+                    document.getElementById('nobreaks-count').textContent = '-';
+                }
+            };
+            
+            fetchDashboardData();
+            setInterval(fetchDashboardData, 60000);
+        });
+    </script>
+</body>
+</html>
