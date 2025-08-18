@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Visualizar Registros</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
+</head>
+
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title"><span id="view-title">Visualizando Registros</span></div>
+            <div class="header-right-placeholder"></div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="box">
+                    <div class="table-controls">
+                        <input type="text" id="filter-input" placeholder="🔎 Filtrar por qualquer campo..."><button
+                            id="create-new-btn" class="create-btn">➕ Criar Novo</button>
+                    </div>
+                    <div class="table-container">
+                        <table id="data-table">
+                            <thead></thead>
+                            <tbody id="table-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+                const sessionResponse = await fetch('/php/check_session.php', { credentials: 'include' });
+                if (!sessionResponse.ok) {
+                    alert('Acesso não autorizado. Por favor, faça o login.');
+                    window.location.href = 'index.html';
+                    return;
+                }
+                const userData = await sessionResponse.json();
+
+                // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA A PÁGINA ---
+                const displayUsername = document.getElementById('display-username');
+                if (displayUsername) { displayUsername.textContent = userData.username; }
+                const menuIcon = document.getElementById('menu-icon');
+                const sidebar = document.getElementById('sidebar');
+                if (menuIcon && sidebar) {
+                    menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                    document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+                }
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        await fetch('/php/logout.php', { method: 'POST', credentials: 'include' });
+                        window.location.href = 'index.html';
+                    });
+                }
+                document.body.classList.add('loaded');
+
+                // --- 3. LÓGICA ESPECÍFICA DA TABELA ---
+                const tableHead = document.querySelector('#data-table thead');
+                const tableBody = document.getElementById('table-body');
+                const filterInput = document.getElementById('filter-input');
+                const pageTitle = document.getElementById('view-title');
+                const createNewBtn = document.getElementById('create-new-btn');
+
+                let allRecords = [];
+                const urlParams = new URLSearchParams(window.location.search);
+                const tipo = urlParams.get('tipo');
+
+                if (!tipo) {
+                    pageTitle.textContent = "Erro: Tipo de registro não especificado.";
+                    return;
+                }
+
+                // =========================================================================
+                // CONFIGURAÇÃO DAS TABELAS (CORRIGIDA E PADRONIZADA)
+                // =========================================================================
+                const tableConfig = {
+                    'pcs': {
+                        title: 'Computadores',
+                        headers: ['Nome da Máquina', 'Usuário', 'Setor', 'Cidade', 'IP', 'SO', 'Patrimônio', 'Ações'],
+                        render: r => `<td>${r.nome_maquina || ''}</td><td>${r.usuario || ''}</td><td>${r.setor || ''}</td><td>${r.cidade || ''}</td><td>${r.endereco_ip || ''}</td><td>${r.so || ''}</td><td>${r.n_patrimonio || ''}</td><td><button class="action-btn edit-btn" data-id="${r.n_pcs}">Editar ✎</button></td>`
+                    },
+                    'monitor': {
+                        title: 'Monitores',
+                        headers: ['ID', 'Modelo', 'Setor', 'Ramal', 'Cidade', 'Ações'],
+                        render: r => `<td>${r.n_monitor || ''}</td><td>${r.nome_monitor || ''}</td><td>${r.setor || ''}</td><td>${r.ramal || ''}</td><td>${r.cidade || ''}</td><td><button class="action-btn edit-btn" data-id="${r.id_monitor}">Editar ✎</button></td>`
+                    },
+                    'nobreak': {
+                        title: 'Nobreaks',
+                        headers: ['ID', 'Modelo', 'Setor', 'Ramal', 'Cidade', 'Ações'],
+                        render: r => `<td>${r.n_nobreak || ''}</td><td>${r.nome_nobreak || ''}</td><td>${r.setor || ''}</td><td>${r.ramal || ''}</td><td>${r.cidade || ''}</td><td><button class="action-btn edit-btn" data-id="${r.id_nobreak}">Editar ✎</button></td>`
+                    },
+                };
+
+                const config = tableConfig[tipo];
+                if (!config) {
+                    pageTitle.textContent = `Erro: Configuração para '${tipo}' não encontrada.`;
+                    return;
+                }
+
+                pageTitle.textContent = `Visualizando ${config.title}`;
+                tableHead.innerHTML = `<tr>${config.headers.map(h => `<th>${h}</th>`).join('')}</tr>`;
+
+                const showSpinner = () => { tableBody.innerHTML = `<tr><td colspan="${config.headers.length}"><div class="spinner-container"><div class="spinner"></div></div></td></tr>`; };
+
+                const renderTable = (records) => {
+                    if (!records || records.length === 0) { tableBody.innerHTML = `<tr><td colspan="${config.headers.length}">Nenhum registro encontrado.</td></tr>`; return; }
+                    const tableHTML = records.map(record => `<tr>${config.render(record)}</tr>`).join('');
+                    tableBody.innerHTML = tableHTML;
+                };
+
+                const fetchData = async () => {
+                    showSpinner();
+                    try {
+                        const response = await fetch(`/php/api_mon.php?registros=${tipo}`, { credentials: 'include' });
+                        if (!response.ok) throw new Error(`Erro na API: ${response.statusText}`);
+                        const data = await response.json();
+                        allRecords = data.registros || [];
+                        renderTable(allRecords);
+                    } catch (error) {
+                        console.error("Erro ao buscar dados:", error);
+                        tableBody.innerHTML = `<tr><td colspan="${config.headers.length}">Erro ao carregar dados. Verifique o console.</td></tr>`;
+                    }
+                };
+
+                tableBody.addEventListener('click', (e) => {
+                    const editButton = e.target.closest('.edit-btn');
+                    if (editButton) { window.location.href = `edita_produto.html?tipo=${tipo}&id=${editButton.dataset.id}`; }
+                });
+
+                filterInput.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filteredRecords = allRecords.filter(record => Object.values(record).some(value => String(value).toLowerCase().includes(searchTerm)));
+                    renderTable(filteredRecords);
+                });
+
+                createNewBtn.addEventListener('click', () => { window.location.href = `criar.html?tipo=${tipo}`; });
+
+                fetchData();
+
+            } catch (error) {
+                console.error("Erro crítico na página:", error);
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+</body>
+
+</html>
