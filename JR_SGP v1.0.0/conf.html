@@ -1,340 +1,85 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JR - Configurações</title>
-
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="temas/style.css">
-    <style>
-        /* === CSS GLOBAL === */
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
-            --header-bg: linear-gradient(90deg, #1c7ed6, #3498db);
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-            --bg-color: #f5f5f5;
-        }
-
-        .dark-mode {
-            --primary-color: #f0f0f0;
-            --secondary-color: #61dafb;
-            --accent-color: #ef5350;
-            --light-color: #3b3b3b;
-            --dark-color: #f0f0f0;
-            --header-bg: linear-gradient(90deg, #1f2024, #2b2c30);
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-            --bg-color: #1a1a1a;
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Roboto', sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--dark-color);
-            overflow-x: hidden;
-            opacity: 0;
-            transition: opacity 0.5s, background-color 0.3s, color 0.3s;
-        }
-        body.loaded { opacity: 1; }
-
-        /* === HEADER GLOBAL === */
-        .header {
-            background: var(--header-bg);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: 700;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            z-index: 1000;
-            position: relative;
-            height: 60px;
-        }
-        .menu-icon {
-            font-size: 1.8em;
-            cursor: pointer;
-            line-height: 1;
-            position: absolute;
-            right: 20px;
-            transition: transform 0.3s ease;
-        }
-        .menu-icon:hover { transform: scale(1.1); }
-        .menu-icon.active { color: var(--accent-color); }
-        .header-title {
-            text-align: center;
-            flex-grow: 1;
-            font-size: 1.5em;
-        }
-        .header-title-text {
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        /* === SIDEBAR GLOBAL === */
-        .sidebar {
-            width: 0;
-            height: 100vh;
-            background-color: var(--primary-color);
-            color: white;
-            transition: width 0.3s ease, background-color 0.3s;
-            overflow-x: hidden;
-            position: fixed;
-            top: 0;
-            right: 0;
-            z-index: 999;
-        }
-        .sidebar.open {
-            width: 250px;
-            padding: 70px 20px 20px 20px;
-        }
-        .sidebar ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        /* === CSS AJUSTADO AQUI === */
-        /* Estilos para os itens e links do menu que estavam faltando */
-        .sidebar ul li {
-            padding: 15px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            transition: background-color 0.2s;
-        }
-        .sidebar ul li:hover {
-            background-color: rgba(255,255,255,0.1);
-        }
-        .sidebar ul li a {
-            color: white;
-            text-decoration: none;
-            font-size: 1.1em;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        /* === FIM DO CSS AJUSTADO === */
-        
-        .sidebar ul li a .icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 24px;
-            font-size: 1.2em;
-        }
-
-
-        /* === MAIN CONTENT CONTAINER === */
-        .content-wrapper {
-            display: flex;
-        }
-        .main-content {
-            padding: 20px;
-            flex-grow: 1;
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 20px;
-            transition: margin-right 0.3s ease;
-        }
-        body.sidebar-open .main-content { margin-right: 250px; }
-
-        /* === BOXES === */
-        .box {
-            border-radius: 8px;
-            background-color: white;
-            box-shadow: var(--box-shadow);
-            padding: 20px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .box:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-
-        /* === SETTINGS SECTION === */
-        .settings-section {
-            display: grid;
-            gap: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-            padding-top: 20px;
-        }
-        .settings-title {
-            font-size: 1.5em;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 10px;
-        }
-        .setting-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px;
-            background-color: var(--light-color);
-            border-radius: 8px;
-        }
-        .setting-item label {
-            font-weight: 700;
-            color: var(--dark-color);
-        }
-        .setting-item input[type="text"] {
-            flex-grow: 1;
-            margin-right: 15px;
-        }
-        .setting-item button {
-            padding: 8px 15px;
-            font-size: 1em;
-            cursor: pointer;
-        }
-
-        /* === SWITCH (Dark Mode Toggle) === */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-        .switch input { display: none; }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px; width: 26px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider { background-color: #2196F3; }
-        input:checked + .slider:before { transform: translateX(26px); }
-
-        /* === MESSAGES === */
-        #message {
-            margin-top: 20px;
-            padding: 15px;
-            border-radius: 8px;
-            text-align: center;
-        }
-        .message.success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-        .message.error {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-    </style>
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
 </head>
+
 <body>
-     <script src="/temas/script_tema.js"></script>
-    <div class="header">
-        <div class="header-title">Configurações</div>
-        <div id="menu-icon" class="menu-icon">&#8942;</div>
-    </div>
-
-    <div class="content-wrapper">
-        <div id="sidebar" class="sidebar">
-            <ul>
-                <li><a href="main.html"><i class="icon">🏠</i><span>Dashboard</span></a></li>
-                <li><a href="gerenciar_dispositivos.html"><i class="icon">💻</i><span>Gerenciar Dispositivos</span></a></li>
-                <li><a href="conf.html"><i class="icon">⚙️</i><span>Configurações</span></a></li>
-                <li><a href="#" id="logout-btn"><i class="icon">🚪</i><span>Sair</span></a></li>
-            </ul>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title">Seja Bem-vindo, <span id="display-username">...</span></div>
+            <div class="header-right-placeholder"></div>
         </div>
-
-        <div class="main-content">
-            <div class="settings-section">
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
                 <div class="box">
-                    <div class="settings-title">Alterar Nome de Usuário</div>
-                    <form id="update-username-form">
-                        <div class="setting-item">
-                            <input type="text" id="new-username-input" placeholder="Novo nome de usuário" required autocomplete="off">
-                            <button type="submit">Salvar</button>
-                        </div>
-                    </form>
-                </div>
-
-                <div class="box">
-                    <div class="settings-title">Modo Escuro</div>
-                    <div class="setting-item">
-                        <span>Ativar modo escuro</span>
-                        <label class="switch">
-                            <input type="checkbox" id="dark-mode-toggle">
-                            <span class="slider">
-                                <span class="icon-sun">☀️</span>
-                                <span class="icon-moon">🌙</span>
-                            </span>
-                        </label>
-
-                        <script src="/temas/script_tema.js"></script>
-                    </div>
-                    <div id="message" class="message"></div>
+                    <h1>Gerenciar Dispositivos</h1>
+                    <br>
+                    <p>O conteúdo para Configurar temas, mudar senha do usuário fica aqui.</p>
+                    <p>Proxima atualização essa pagina estará disponivel</p>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const menuIcon = document.getElementById('menu-icon');
-            const sidebar = document.getElementById('sidebar');
-            const logoutBtn = document.getElementById('logout-btn');
-            const body = document.body;
-
-            const username = localStorage.getItem('username');
-            if (!username) {
-                window.location.href = 'index.html';
-                return;
-            }
-
-            menuIcon.addEventListener('click', () => {
-                sidebar.classList.toggle('open');
-                body.classList.toggle('sidebar-open');
-            });
-
-            logoutBtn.addEventListener('click', () => {
-                localStorage.removeItem('username');
-                window.location.href = 'index.html';
-            });
-
-            // Dark Mode
-            const darkModeToggle = document.getElementById('dark-mode-toggle');
-            if (localStorage.getItem('darkMode') === 'enabled') {
-                body.classList.add('dark-mode');
-                darkModeToggle.checked = true;
-            }
-
-            darkModeToggle.addEventListener('change', () => {
-                if (darkModeToggle.checked) {
-                    body.classList.add('dark-mode');
-                    localStorage.setItem('darkMode', 'enabled');
-                } else {
-                    body.classList.remove('dark-mode');
-                    localStorage.setItem('darkMode', 'disabled');
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+                const sessionResponse = await fetch('/php/check_session.php', { credentials: 'include' });
+                if (!sessionResponse.ok) {
+                    alert('Acesso não autorizado. Por favor, faça o login.');
+                    window.location.href = 'index.html';
+                    return;
                 }
-            });
+                const userData = await sessionResponse.json();
 
-            setTimeout(() => {
-                body.classList.add('loaded');
-            }, 100);
+                // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA OS ELEMENTOS GLOBAIS ---
+                const displayUsername = document.getElementById('display-username');
+                if (displayUsername) { displayUsername.textContent = userData.username; }
+
+                const menuIcon = document.getElementById('menu-icon');
+                const sidebar = document.getElementById('sidebar');
+                if (menuIcon && sidebar) {
+                    menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                    document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+                }
+
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', async (e) => {
+                        e.preventDefault();
+                        await fetch('/php/logout.php', { method: 'POST', credentials: 'include' });
+                        window.location.href = 'index.html';
+                    });
+                }
+
+                // --- 3. MOSTRA A PÁGINA ---
+                document.body.classList.add('loaded');
+
+            } catch (error) {
+                console.error("Erro crítico na página:", error);
+                window.location.href = 'index.html';
+            }
         });
     </script>
 </body>
+
 </html>

@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JR - Gerenciar Dispositivos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
+</head>
+<body>
+    <div id="app-content">
+        <div class="header">
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title">Seja Bem-vindo, <span id="display-username">...</span></div>
+            <div class="header-right-placeholder"></div>
+        </div>
+        <div class="content-wrapper">
+            <div id="sidebar" class="sidebar">
+                 <ul>
+                    <li><a href="main.html">🏠 Dashboard</a></li>
+                    <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
+                    <li><a href="conf.html">⚙️ Configurações</a></li>
+                    <li><a href="#" id="logout-btn">🚪 Sair</a></li>
+                </ul>
+            </div>
+            <div class="main-content">
+                <div class="box">
+                    <h1>Gerenciar Dispositivos</h1>
+                    <br>
+                    <p>O conteúdo para gerenciar computadores, monitores e nobreaks ficará aqui.</p>
+                    <p>Você pode, por exemplo, adicionar botões ou links que levam para a página <strong>visualizar.html</strong> com o tipo de dispositivo correto.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+            const sessionResponse = await fetch('/php/check_session.php', { credentials: 'include' });
+            if (!sessionResponse.ok) {
+                alert('Acesso não autorizado. Por favor, faça o login.');
+                window.location.href = 'index.html';
+                return;
+            }
+            const userData = await sessionResponse.json();
+
+            // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA OS ELEMENTOS GLOBAIS ---
+            const displayUsername = document.getElementById('display-username');
+            if (displayUsername) { displayUsername.textContent = userData.username; }
+
+            const menuIcon = document.getElementById('menu-icon');
+            const sidebar = document.getElementById('sidebar');
+            if (menuIcon && sidebar) {
+                menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await fetch('/php/logout.php', { method: 'POST', credentials: 'include' });
+                    window.location.href = 'index.html';
+                });
+            }
+
+            // --- 3. MOSTRA A PÁGINA ---
+            document.body.classList.add('loaded');
+
+        } catch (error) {
+            console.error("Erro crítico na página:", error);
+            window.location.href = 'index.html';
+        }
+    });
+    </script>
+</body>
+</html>
