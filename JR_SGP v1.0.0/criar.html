@@ -5,59 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>JR - Criar Novo Registro</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        /* === CSS GLOBAL === */
-        :root {
-            --primary-color: #2c3e50; --secondary-color: #3498db; --accent-color: #e74c3c;
-            --light-color: #ecf0f1; --dark-color: #2c3e50; --header-bg: linear-gradient(90deg, #1c7ed6, #3498db);
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08); --bg-color: #f5f5f5; --border-color: #ddd;
-        }
-        .dark-mode {
-            --primary-color: #f0f0f0; --secondary-color: #61dafb; --accent-color: #ef5350;
-            --light-color: #3b3b3b; --dark-color: #f0f0f0; --header-bg: linear-gradient(90deg, #1f2024, #2b2c30);
-            --box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); --bg-color: #1a1a1a; --border-color: #4a4a4a;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
-        body { background-color: var(--bg-color); color: var(--dark-color); overflow-x: hidden; opacity: 0; transition: opacity 0.5s, background-color 0.3s, color 0.3s; }
-        body.loaded { opacity: 1; }
-        .header { background: var(--header-bg); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; box-shadow: 0 2px 5px rgba(0,0,0,0.2); z-index: 1000; position: relative; height: 60px; }
-        .menu-icon { font-size: 1.8em; cursor: pointer; line-height: 1; position: absolute; right: 20px; transition: transform 0.3s ease; }
-        .header-title { text-align: center; flex-grow: 1; font-size: 1.5em; }
-        .sidebar { width: 0; height: 100vh; background-color: var(--primary-color); color: white; transition: width 0.3s ease, background-color 0.3s; overflow-x: hidden; position: fixed; top: 0; right: 0; z-index: 999; }
-        .sidebar.open { width: 250px; padding: 70px 20px 20px 20px; }
-        .sidebar ul { list-style: none; padding: 0; margin: 0; }
-        .sidebar ul li { padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); transition: background-color 0.2s; }
-        .sidebar ul li:hover { background-color: rgba(255,255,255,0.1); }
-        .sidebar ul li a { color: white; text-decoration: none; font-size: 1.1em; display: flex; align-items: center; gap: 15px; }
-        .content-wrapper { display: flex; }
-        body.sidebar-open .main-content { margin-right: 250px; transition: margin-right 0.3s ease; }
-
-        /* === CSS DO FORMULÁRIO === */
-        .main-content { padding: 20px; flex-grow: 1; }
-        .box { border-radius: 8px; background-color: var(--light-color); box-shadow: var(--box-shadow); padding: 20px; border: 1px solid transparent; }
-        .dark-mode .box { border: 1px solid var(--border-color); }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: 700; text-transform: capitalize; }
-        .form-group input { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid var(--border-color); font-size: 1em; background-color: var(--bg-color); color: var(--dark-color); }
-        .form-actions { margin-top: 20px; display: flex; gap: 10px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: 700; transition: opacity 0.2s; }
-        .btn:hover { opacity: 0.8; }
-        .btn-primary { background-color: var(--secondary-color); color: white; }
-        .btn-secondary { background-color: #ccc; color: #333; }
-        #feedback-message { margin-top: 20px; padding: 15px; border-radius: 5px; display: none; text-align: center; font-weight: 700; }
-        #feedback-message.success { background-color: #d4edda; color: #155724; }
-        #feedback-message.error { background-color: #f8d7da; color: #721c24; }
-    </style>
+    <link rel="stylesheet" href="estilo/mdpadrao.css">
 </head>
 <body>
     <div id="app-content">
         <div class="header">
-            <div class="header-title"><span id="create-title">Criar Novo Registro</span></div>
-            <div id="menu-icon" class="menu-icon">&#8942;</div>
+            <div class="header-left">
+                <div id="menu-icon" class="menu-icon">&#9776;</div>
+                <a href="main.html" class="logo-link"><img src="JR.png" alt="JR Logo" class="logo-img"></a>
+            </div>
+            <div class="header-title">Seja Bem-vindo, <span id="display-username">...</span></div>
+            <div class="header-right-placeholder"></div>
         </div>
         <div class="content-wrapper">
             <div id="sidebar" class="sidebar">
-                 <ul>
+                <ul>
                     <li><a href="main.html">🏠 Dashboard</a></li>
                     <li><a href="gerenciar_dispositivos.html">💻 Gerenciar Dispositivos</a></li>
                     <li><a href="conf.html">⚙️ Configurações</a></li>
@@ -65,10 +27,11 @@
                 </ul>
             </div>
             <div class="main-content">
-                <div class="box">
+                <div class="box form-container">
+                    <h1 id="create-title" style="text-align: center; margin-bottom: 20px;">Criar Novo Registro</h1>
                     <form id="create-form">
                         <div id="form-fields">
-                            <p>Carregando formulário...</p>
+                            <div class="spinner-container"><div class="spinner"></div></div>
                         </div>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Salvar Novo Registro</button>
@@ -82,25 +45,40 @@
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Lógica Global (menu, tema, logout)
-            const body = document.body;
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // --- 1. VERIFICA A SESSÃO PRIMEIRO ---
+            const sessionResponse = await fetch('/php/check_session.php', { credentials: 'include' });
+            if (!sessionResponse.ok) {
+                alert('Acesso não autorizado. Por favor, faça o login.');
+                window.location.href = 'index.html';
+                return;
+            }
+            const userData = await sessionResponse.json();
+
+            // --- 2. SE A SESSÃO É VÁLIDA, CONFIGURA A PÁGINA ---
+            const displayUsername = document.getElementById('display-username');
+            if(displayUsername) { displayUsername.textContent = userData.username; }
+
             const menuIcon = document.getElementById('menu-icon');
             const sidebar = document.getElementById('sidebar');
-            const logoutBtn = document.getElementById('logout-btn');
             if (menuIcon && sidebar) {
-                menuIcon.addEventListener('click', () => {
-                    sidebar.classList.toggle('open');
-                    body.classList.toggle('sidebar-open');
+                menuIcon.addEventListener('click', (e) => { e.stopPropagation(); sidebar.classList.toggle('open'); document.body.classList.toggle('sidebar-open'); });
+                document.addEventListener('click', (e) => { if (sidebar.classList.contains('open') && !sidebar.contains(e.target) && !menuIcon.contains(e.target)) { sidebar.classList.remove('open'); document.body.classList.remove('sidebar-open'); } });
+            }
+
+            const logoutBtn = document.getElementById('logout-btn');
+            if(logoutBtn) {
+                logoutBtn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    await fetch('/php/logout.php', { method: 'POST', credentials: 'include' });
+                    window.location.href = 'index.html';
                 });
             }
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', () => { localStorage.clear(); window.location.href = 'index.html'; });
-            }
-            const applyTheme = () => { if (localStorage.getItem('darkMode') === 'enabled') { body.classList.add('dark-mode'); } else { body.classList.remove('dark-mode'); } };
-            applyTheme();
 
-            // Lógica Específica da Página
+            document.body.classList.add('loaded');
+
+            // --- 3. EXECUTA A LÓGICA ESPECÍFICA DA PÁGINA DE CRIAÇÃO ---
             const formFields = document.getElementById('form-fields');
             const createForm = document.getElementById('create-form');
             const pageTitle = document.getElementById('create-title');
@@ -112,26 +90,23 @@
 
             if (!tipo) {
                 pageTitle.textContent = "Erro: Tipo de registro não especificado.";
-                body.classList.add('loaded');
+                formFields.innerHTML = '<p class="error">Não foi possível determinar o tipo de item a ser criado.</p>';
                 return;
             }
             
-            pageTitle.textContent = `Criar Novo(a) ${tipo.replace('pcs', 'PC')}`;
+            pageTitle.textContent = `Criar Novo(a) ${tipo.replace('pcs', 'PC').replace('monitor', 'Monitor').replace('nobreak', 'Nobreak')}`;
 
             const buildFormFromSchema = async () => {
                 try {
-                    const response = await fetch(`php/api_mon.php?getschema=${tipo}`);
+                    // CORREÇÃO: Usando caminho absoluto
+                    const response = await fetch(`/php/api_mon.php?getschema=${tipo}`, { credentials: 'include' });
+                    if(!response.ok) throw new Error("Não foi possível carregar a estrutura do formulário.");
                     const schema = await response.json();
                     
                     let formHTML = '';
                     schema.forEach(column => {
-                        if (column.Extra === 'auto_increment') {
-                            return;
-                        }
-                        
-                        // Transforma o nome do campo (ex: 'nome_maquina') em um label amigável ('Nome maquina')
+                        if (column.Extra === 'auto_increment') { return; }
                         const label = column.Field.replace(/_/g, ' ');
-                        
                         formHTML += `
                             <div class="form-group">
                                 <label for="${column.Field}">${label}</label>
@@ -142,21 +117,22 @@
                     formFields.innerHTML = formHTML;
 
                 } catch (error) {
-                    formFields.innerHTML = '<p style="color: red;">Erro ao carregar o formulário. Verifique a API.</p>';
+                    formFields.innerHTML = `<p style="color:red;">${error.message}</p>`;
                     console.error('Erro ao buscar esquema:', error);
                 }
             };
             
             createForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                
                 const formData = new FormData(createForm);
                 const dataToCreate = Object.fromEntries(formData.entries());
 
                 try {
-                    const response = await fetch('php/api_mon.php', {
+                    // CORREÇÃO: Usando caminho absoluto
+                    const response = await fetch('/php/api_mon.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        credentials: 'include',
                         body: JSON.stringify({ tipo: tipo, data: dataToCreate })
                     });
                     
@@ -166,9 +142,9 @@
                         feedbackMessage.textContent = result.message;
                         feedbackMessage.className = 'success';
                         feedbackMessage.style.display = 'block';
-                        setTimeout(() => window.location.href = `visualizar.html?tipo=${tipo}`, 2000);
+                        setTimeout(() => window.location.href = `visualizar.html?tipo=${tipo}`, 1500);
                     } else {
-                        throw new Error(result.error);
+                        throw new Error(result.error || "Erro desconhecido ao salvar.");
                     }
                 } catch (error) {
                     feedbackMessage.textContent = 'Erro: ' + error.message;
@@ -182,9 +158,12 @@
             });
 
             buildFormFromSchema();
-            
-            setTimeout(() => { body.classList.add('loaded'); }, 100);
-        });
+
+        } catch (error) {
+            console.error("Erro crítico na página:", error);
+            window.location.href = 'index.html';
+        }
+    });
     </script>
 </body>
 </html>
